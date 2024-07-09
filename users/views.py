@@ -16,7 +16,8 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            token, ceated = Token.objects.get_or_create(user=user)
+            return Response(  status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny], url_path='login')
@@ -30,10 +31,12 @@ class UserViewSet(viewsets.ViewSet):
             'user_id': user.pk,
             'email': user.email,
             'role': user.role,
-            'is_seller': user.is_seller
+            'is_seller': user.is_seller,
+            'token':token.key,
+            'user':UserSerializer(user).data
         })
 
-    @action(detail=False, methods=['get', 'put'], permission_classes=[permissions.IsAuthenticated], url_path='profile')
+    @action(detail=False, methods=['get', 'put'], permission_classes=[permissions.AllowAny], url_path='profile')
     def profile(self, request):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)

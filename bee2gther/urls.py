@@ -2,13 +2,17 @@ from django.contrib import admin
 from django.urls import path, include
 from bee2gther import settings
 from rest_framework.routers import DefaultRouter
+from orders.views import OrderViewSet
 from users.views import UserViewSet
 from products.views import ProductViewSet
+from groupbuys.views import GroupBuyViewSet
 from django.conf.urls.static import static
 from django.conf import settings
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'products', ProductViewSet)
+router.register(r'orders', OrderViewSet)
+router.register(r'groupbuys', GroupBuyViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

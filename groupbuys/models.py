@@ -9,11 +9,13 @@ def one_week_from_now():
 
 
 class GroupBuy(models.Model):
+    group = models.ManyToManyField(CustomUser, related_name='groupbuys_group')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    users = models.ManyToManyField(CustomUser)
+    users = models.ManyToManyField(CustomUser,  related_name='groupbuys_users')
     created_at = models.DateTimeField(default=tz.now)
     is_active = models.BooleanField(default=True)
     end_date = models.DateTimeField(default=one_week_from_now)
+    start_time = models.DateTimeField(default=tz.now)
     min_quantity = models.PositiveIntegerField(default=0)
     max_quantity = models.PositiveIntegerField(default=0)
     target_quantity = models.PositiveIntegerField(default=0)
@@ -33,6 +35,6 @@ class Participation(models.Model):
     group_buy = models.ForeignKey(GroupBuy, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    timestamp = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"{self.CustomUser.username} in {self.group_buy.product.name}"
