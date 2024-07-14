@@ -14,7 +14,7 @@ api # API Endpoints Summary
 - PATCH /api/products/{id}/ - Partially update a product (seller only)
 - DELETE /api/products/{id}/ - Delete a product (seller only)
 
-## Group Buys
+## Group Buys`
 - GET /api/group-buys/ - List all group buys
 - POST /api/group-buys/ - Create a new group buy
 - GET /api/group-buys/{id}/ - Retrieve a specific group buy
@@ -22,6 +22,13 @@ api # API Endpoints Summary
 - PATCH /api/group-buys/{id}/ - Partially update a group buy
 - DELETE /api/group-buys/{id}/ - Delete a group buy
 - POST /api/group-buys/{id}/join/ - Join a group buy
+GET /api/groupbuys/: List all group buys
+POST /api/groupbuys/: Create a new group buy
+GET /api/groupbuys/{id}/: Retrieve a specific group buy
+PUT /api/groupbuys/{id}/: Update a specific group buy
+DELETE /api/groupbuys/{id}/: Delete a specific group buy
+POST /api/groupbuys/{id}/join/: Join a specific group buy
+GET /api/groupbuys/{id}/participants/: List participants of a specific group buy
 
 ## Orders
 - GET /api/orders/ - List user's orders
@@ -30,3 +37,4 @@ api # API Endpoints Summary
 - PUT /api/orders/{id}/ - Update an order
 - PATCH /api/orders/{id}/ - Partially update an order
 - DELETE /api/orders/{id}/ - Delete an order# bee2gther_api
+

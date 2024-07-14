@@ -37,7 +37,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.eerors, status = status.HTTP_201_CREATED)
-        return Response(serilaizer.errors, status=status.HTTP_401_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_401_REQUEST)
         
     @action(detail=True, methods=['post'])
     def update_stock(self, request, pk=None):

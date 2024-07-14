@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'groupbuys',
     'rest_framework.authtoken',
     'wishlist',
+    'imagekit',
     
 ]
 AUTH_USER_MODEL = 'users.CustomUser'

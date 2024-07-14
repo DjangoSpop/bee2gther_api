@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from .serializers import UserRegistrationSerializer, UserSerializer, UserUpdateSerializer
 
@@ -16,32 +17,36 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            token, ceated = Token.objects.get_or_create(user=user)
-            return Response(  status=status.HTTP_201_CREATED)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'token': token.key,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny], url_path='login')
     def login(self, request):
-        serializer = ObtainAuthToken().serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            'token': token.key,
-            'user_id': user.pk,
-            'email': user.email,
-            'role': user.role,
-            'is_seller': user.is_seller,
-            'token':token.key,
-            'user':UserSerializer(user).data
-        })
+       username = request.data.get('username')
+       password = request.data.get('password')
+       
+       user = authenticate(username=username, password=password)
+       
+       if user:
+           token, created = Token.objects.get_or_create(user=user)
+           return Response({
+               'token': token.key,
+                'user': UserSerializer(user).data
+           })
+       else:
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+       
+       
 
-    @action(detail=False, methods=['get', 'put'], permission_classes=[permissions.AllowAny], url_path='profile')
+    @action(detail=False, methods=['get', 'put'], permission_classes=[permissions.IsAuthenticated], url_path='profile')
     def profile(self, request):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
             return Response(serializer.data)
-        
         elif request.method == 'PUT':
             serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
             if serializer.is_valid():
