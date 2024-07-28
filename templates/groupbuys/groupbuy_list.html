@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Active Group Buys</h1>
+<div class="groupbuy-list">
+    {% for groupbuy in groupbuys %}
+    <div class="groupbuy-card">
+        <h2>{{ groupbuy.product.name }}</h2>
+        <p>Discount Price: ${{ groupbuy.discount_price }}</p>
+        <p>Participants: {{ groupbuy.participants }} / {{ groupbuy.target_participants }}</p>
+        <a href="{% url 'groupbuy-detail' groupbuy.pk %}">View Details</a>
+    </div>
+    {% empty %}
+    <p>No active group buys at the moment.</p>
+    {% endfor %}
+</div>
+{% endblock %}

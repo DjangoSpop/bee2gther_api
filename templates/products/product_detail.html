@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ product.name }}</h1>
+<p>{{ product.description }}</p>
+<p>Price: ${{ product.price }}</p>
+<p>Category: {{ product.category.name }}</p>
+{% if product.group_buy %}
+<h2>Group Buy Available!</h2>
+<p>Discount Price: ${{ product.group_buy.discount_price }}</p>
+<p>Participants: {{ product.group_buy.participants }} / {{ product.group_buy.target_participants }}</p>
+<a href="{% url 'join-group-buy' product.group_buy.pk %}">Join Group Buy</a>
+{% endif %}
+<a href="{% url 'add-to-cart' product.pk %}">Add to Cart</a>
+{% endblock %}

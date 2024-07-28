@@ -17,7 +17,9 @@ class CartItemSerializer(serializers.ModelSerializer):
             'price': obj.product.price,
             'image': obj.product.image.url if obj.product.image else None
         }
-
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'quantity', 'added_at']
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()

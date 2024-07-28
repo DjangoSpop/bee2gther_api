@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from products.models import Product
-from .models import GroupBuy, Participation
+from .models import GroupBuy, GroupBuyParticipation
 from products.serializers import ProductSerializer
 
 class GroupBuySerializer(serializers.ModelSerializer):
@@ -65,9 +65,9 @@ class GroupBuySerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
-class ParticipationSerializer(serializers.ModelSerializer):
+class GroupBuyParticipationSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
 
     class Meta:
-        model = Participation
+        model = GroupBuyParticipation
         fields = ['id', 'user', 'group_buy', 'quantity', 'created_at']

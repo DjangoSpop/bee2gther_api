@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ groupbuy.product.name }} Group Buy</h1>
+<p>Discount Price: ${{ groupbuy.discount_price }}</p>
+<p>Participants: {{ groupbuy.participants }} / {{ groupbuy.target_participants }}</p>
+<p>Ends on: {{ groupbuy.end_date }}</p>
+
+{% if not groupbuy.is_closed %}
+    {% if user.is_authenticated %}
+        {% if not user_in_groupbuy %}
+            <form method="post" action="{% url 'join-groupbuy' groupbuy.pk %}">
+                {% csrf_token %}
+                <button type="submit">Join Group Buy</button>
+            </form>
+        {% else %}
+            <p>You are already part of this group buy.</p>
+        {% endif %}
+    {% else %}
+        <p>Please <a href="{% url 'login' %}">log in</a> to join this group buy.</p>
+    {% endif %}
+{% else %}
+    <p>This group buy is closed.</p>
+{% endif %}
+{% endblock %}

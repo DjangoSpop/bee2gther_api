@@ -1,40 +1,35 @@
 from django.db import models
-from users.models import CustomUser
-from django.utils import timezone as tz
-from imagekit.models import ProcessedImageField
-from imagekit.processors import ResizeToFit
-from django.conf import settings
-
-
-
+from django.core.validators import MinValueValidator
+from categories.models import Category
+from groupbuys.models import GroupBuy
+from decimal import Decimal
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    min_quantity = models.PositiveIntegerField()
-    discounted_price = models.DecimalField(max_digits=10, decimal_places=2)
-    buy_now_price = models.DecimalField(max_digits=10, decimal_places=2)
-    category = models.CharField(max_length=255)
-    size = models.CharField(max_length=255)
-    stock = models.IntegerField(default=0)
-    seller = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='products')
-    created_at = models.DateTimeField(default=tz.now)
-    def __str__(self):
-      return self.name
-  
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = ProcessedImageField(upload_to='products_images/', processors=[ResizeToFit(800, 800)], format='JPEG', options={'quality': 85})
-    is_primary = models.BooleanField(default=False)
-    def save(self, *args, **kwargs):
-        if self.is_primary:
-            ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
-        super().save(*args, **kwargs)   
- 
-class CartItem(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='cart_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        default=Decimal('0.01')  # Default price of 0.01
+    )
+    category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
+    group_buy = models.OneToOneField(GroupBuy, related_name='associated_product', on_delete=models.SET_NULL, null=True,
+                                     blank=True)
+    stock = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    def __str__(self) -> str:
-        return super().__str__()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    main_image = models.ImageField(upload_to='products/', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='products/')
+    is_main = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Image for {self.product.name}"

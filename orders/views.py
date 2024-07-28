@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from .models import Order
 from .serializers import OrderSerializer, OrderCreateSerializer
-from groupbuys.models import GroupBuy, Participation
+from groupbuys.models import GroupBuy, GroupBuyParticipation
 from products.models import Product
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -32,9 +32,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             group_buy = GroupBuy.objects.select_for_update().get(id=group_buy_id)
             
             if group_buy.status != 'active':
-                raise serializers.ValidationError("This group buy is not active.")
+                raise serializer.ValidationError("This group buy is not active.")
             
-            participation, created = Participation.objects.get_or_create(
+            participation, created = GroupBuyParticipation.objects.get_or_create(
                 user=self.request.user,
                 group_buy=group_buy,
                 defaults={'quantity': 0}
@@ -79,7 +79,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             group_buy.current_quantity -= order.quantity
             group_buy.save()
 
-            participation = Participation.objects.get(user=order.user, group_buy=group_buy)
+            participation = GroupBuyParticipation.objects.get(user=order.user, group_buy=group_buy)
             participation.quantity -= order.quantity
             if participation.quantity <= 0:
                 participation.delete()

@@ -4,10 +4,19 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from products.views import StandardResultsSetPagination
-from .models import GroupBuy, Participation
-from .serializers import GroupBuySerializer, ParticipationSerializer
+from .models import GroupBuy, GroupBuyParticipation
+from .serializers import GroupBuySerializer, GroupBuyParticipation, GroupBuyParticipationSerializer
 from products.models import Product
-
+from django.views.generic import ListView, DetailView
+from django.views import View
+from django.shortcuts import redirect
+from django.views import View
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.db import transaction
+from .models import GroupBuy, GroupBuyParticipation
+from django.http import HttpResponseBadRequest
 class GroupBuyViewSet(viewsets.ModelViewSet):
     queryset = GroupBuy.objects.all()
     serializer_class = GroupBuySerializer
@@ -46,9 +55,9 @@ class GroupBuyViewSet(viewsets.ModelViewSet):
         if timezone.now() > group_buy.end_date:
             return Response({'detail': 'This group buy has expired.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        serializer = ParticipationSerializer(data=request.data)
+        serializer = GroupBuyParticipationSerializer(data=request.data)
         if serializer.is_valid():
-            participation, created = Participation.objects.get_or_create(
+            participation, created = GroupBuyParticipation.objects.get_or_create(
                 user=request.user,
                 group_buy=group_buy,
                 defaults={'quantity': quantity}
@@ -72,13 +81,13 @@ class GroupBuyViewSet(viewsets.ModelViewSet):
         Get all participants for a specific group buy.
         """
         group_buy = self.get_object()
-        participations = Participation.objects.filter(group_buy=group_buy)
-        serializer = ParticipationSerializer(participations, many=True)
+        participations = GroupBuyParticipation.objects.filter(group_buy=group_buy)
+        serializer = GroupBuyParticipationSerializer(participations, many=True)
         return Response(serializer.data)
     
 class ParticipationViewSet(viewsets.ModelViewSet):
-    queryset = Participation.objects.all()
-    serializer_class = ParticipationSerializer
+    queryset = GroupBuyParticipation.objects.all()
+    serializer_class = GroupBuyParticipationSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardResultsSetPagination
 
@@ -109,3 +118,67 @@ class ParticipationViewSet(viewsets.ModelViewSet):
         group_buy.save()
 
         return Response({"detail": "Quantity updated successfully."}, status=status.HTTP_200_OK)
+
+class GroupListView(ListView):
+    model = GroupBuy
+    template_name = 'groupbuys/groupbuy_list.html'
+    context_object_name = 'groupbuys'
+class GroupBuyDetailView(ListView):
+    model = GroupBuy
+    template_name = 'groupbuys/group_detail.html'
+    context_object_name = 'groupbuys'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            context['user_in_groupbuy'] = GroupBuyParticipation.objects.filter(
+                group_buy=self.object,
+                user=self.request.user
+            ).exists()
+        return context
+
+class joinGroupView(View):
+    def post(self, request, pk):
+        groupbuy = GroupBuy.objects.get(pk=pk)
+        return redirect('groupbuy-detail', pk=pk)
+
+
+class JoinGroupBuyView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        groupbuy = get_object_or_404(GroupBuy, pk=pk)
+
+        if groupbuy.is_closed:
+            messages.error(request, "This group buy is already closed.")
+            return redirect('groupbuy-detail', pk=pk)
+
+        if GroupBuyParticipation.objects.filter(group_buy=groupbuy, user=request.user).exists():
+            messages.warning(request, "You are already part of this group buy.")
+            return redirect('groupbuy-detail', pk=pk)
+
+        try:
+            with transaction.atomic():
+                # Check if there's still space in the group buy
+                if groupbuy.participants < groupbuy.target_participants:
+                    # Create a new participant entry
+                    GroupBuyParticipation.objects.create(
+                        group_buy=groupbuy,
+                        user=request.user
+                    )
+
+                    # Increment the participant count
+                    groupbuy.participants += 1
+                    groupbuy.save()
+
+                    # Check if the target has been reached
+                    if groupbuy.participants == groupbuy.target_participants:
+                        groupbuy.is_closed = True
+                        groupbuy.save()
+                        # Here you might want to trigger some additional logic,
+                        # like notifying all participants or processing orders
+
+                    messages.success(request, "You have successfully joined the group buy!")
+                else:
+                    messages.error(request, "This group buy is already full.")
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+
+        return redirect('groupbuy-detail', pk=pk)

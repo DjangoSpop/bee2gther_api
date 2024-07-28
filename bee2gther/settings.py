@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'users',
     'products',
     'orders',
+    'cart.apps.CartConfig',
     'corsheaders',
+    'categories',
     'groupbuys',
     'rest_framework.authtoken',
     'wishlist',
@@ -67,7 +69,7 @@ ROOT_URLCONF = 'bee2gther.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -89,8 +91,14 @@ WSGI_APPLICATION = 'bee2gther.wsgi.application'
 
 DATABASES = {
     'default':{
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bee2gther_db',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        'HOST': 'localhost',
+        'PORT': 5432,
+
+
         
     }
 }
